@@ -1,4 +1,5 @@
 // Code adapted from https://github.com/thehubbleproject/hubble-contracts/
+// Commit hash c0228fbda6951257cb27b84dbd9ca81708491703
 
 const mcl = require("mcl-wasm");
 import { BigNumber, ethers } from "ethers";
@@ -30,15 +31,33 @@ export async function init() {
     mcl.setMapToMode(0);
 }
 
-export function setDomain(domain: string) {
-    DOMAIN = Uint8Array.from(Buffer.from(domain, "utf8"));
-}
+// export function setDomain(domain: string) {
+//     DOMAIN = Uint8Array.from(Buffer.from(domain, "utf8"));
+// }
+
+const fromHexString = (hexString: string) => {
+  // method from https://github.com/bitauth/libauth/blob/bdc1d67a3181cf6fcfe796a7b4ae36ee3f98af0a/src/lib/format/hex.ts#L37
+  if (hexString.length % 2 !== 0) {
+    throw new Error("Hex string should be of even length");
+  }
+  if (hexString.length === 0) {
+    throw new Error("length can't be 0");
+  }
+  const regex = hexString.match(/.{1,2}/g);
+
+  if (regex) {
+    return new Uint8Array(regex.map((byte) => parseInt(byte, 16)));
+  } else {
+    throw new Error("Can't parse string");
+  }
+};
 
 export function setDomainHex(domain: string) {
-    DOMAIN = Uint8Array.from(Buffer.from(domain.slice(2), "hex"));
-    if (DOMAIN.length != 32) {
-        throw new Error("bad domain length");
-    }
+  //   DOMAIN = Uint8Array.from(Buffer.from(domain.slice(2), "hex"));
+  DOMAIN = fromHexString(domain.slice(2));
+  if (DOMAIN.length != 32) {
+    throw new Error("bad domain length");
+  }
 }
 
 export function hashToPoint(msg: string): mclG1 {

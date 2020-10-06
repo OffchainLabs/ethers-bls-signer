@@ -8,7 +8,6 @@ const getKeyPair = (key: BytesLike): mcl.keyPair => {
   const secret: mcl.SecretKey = getSecret(key.toString());
   const mclPubkey: mcl.PublicKey = mclwasm.mul(mcl.g2(), secret);
   const normalized = mclwasm.normalize(mclPubkey);
-  // uint256[4]
   const pubkey = mcl.g2ToHex(normalized);
   return { pubkey, secret };
 };
@@ -20,8 +19,8 @@ const getSecret = (key: string): mcl.SecretKey => {
       "BLS private key should be 32 bytes. Did you include 0x at the start?"
     );
   }
-  const fr = mclwasm.deserializeHexStrToFr(key.substr(2));
-  // const answer = fr.serializeToHexStr()
+  const fr = mclwasm.deserializeHexStrToFr(key.slice(2));
+  // console.log(fr.serializeToHexStr())
   return fr;
 };
 
@@ -41,12 +40,9 @@ export class BlsSigner extends Signer {
 
   signMessage = (message: Bytes | string): Promise<string> => {
     const { secret } = getKeyPair(this.privateKey());
-    //  signature: uint256[2]
-    //  message: uint256[2]
     const digest = hexlify(message);
     const { signature, M } = mcl.sign(digest, secret);
     const payload = hexlify(concat(mcl.g1ToHex(signature)));
-    // TODO: a string is not returned from the promise, this abuses the underlying `any` type
     return new Promise((resolve) => resolve(payload));
   };
   getAddress = (): Promise<string> => {

@@ -1,4 +1,5 @@
 // Code adapted from https://github.com/thehubbleproject/hubble-contracts/
+// Commit hash c0228fbda6951257cb27b84dbd9ca81708491703
 
 import { BigNumber } from "ethers";
 import { sha256, arrayify, zeroPad } from "ethers/lib/utils";
