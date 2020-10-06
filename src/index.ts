@@ -8,10 +8,8 @@ import { Provider, TransactionRequest } from "@ethersproject/abstract-provider";
 import * as mcl from "./hubble-project/mcl";
 const mclwasm = require("mcl-wasm");
 
-const getKeyPair = (key: string): mcl.keyPair => {
-    // TODO: substitute Buffer for browser friendly alternative
-    const privateKey = Uint8Array.from(Buffer.from(key, "utf8"));
-    const secret: mcl.SecretKey = getSecret(privateKey);
+const getKeyPair = (key: BytesLike): mcl.keyPair => {
+    const secret: mcl.SecretKey = getSecret(key.toString());
     const mclPubkey: mcl.PublicKey = mclwasm.mul(mcl.g2(), secret);
     const normalized = mclwasm.normalize(mclPubkey);
     // uint256[4]
@@ -19,11 +17,13 @@ const getKeyPair = (key: string): mcl.keyPair => {
     return { pubkey, secret };
 };
 
-const getSecret = (key: BytesLike): mcl.SecretKey => {
-    const fr = new mclwasm.Fr();
-    // TODO: sanitise key input and use it to create secret instead of hashing
-    fr.setHashOf(key);
-    // fr.setStr(key);
+const getSecret = (key: string): mcl.SecretKey => {
+    const hexKey = hexlify(key);
+    if(hexKey.length !== 66) {
+        throw new Error("BLS private key should be 32 bytes. Did you include 0x at the start?");
+    }
+    const fr = mclwasm.deserializeHexStrToFr(key.substr(2))
+    // const answer = fr.serializeToHexStr()
     return fr;
 };
 
