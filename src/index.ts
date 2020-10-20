@@ -1,7 +1,9 @@
 import { BytesLike, Signer } from "ethers";
-import { hexlify, concat, Bytes } from "ethers/lib/utils";
+import { hexlify, concat, Bytes, resolveProperties } from "ethers/lib/utils";
 import { Provider, TransactionRequest } from "@ethersproject/abstract-provider";
-import * as mcl from "hubble-contracts/ts/mcl";
+import * as mcl from "hubble-contracts/dist/ts/mcl";
+import { serialize, UnsignedTransaction } from "@ethersproject/transactions";
+import { keccak256 } from "@ethersproject/keccak256";
 
 export class BlsSigner extends Signer {
   readonly privateKey: () => string;
@@ -30,7 +32,17 @@ export class BlsSigner extends Signer {
     return new Promise((resolve, reject) => reject("Not implemented"));
   };
   signTransaction = (transaction: TransactionRequest): Promise<string> => {
-    return new Promise((resolve, reject) => reject("Not implemented"));
+    return resolveProperties(transaction).then((tx) => {
+      // TODO: check if tx's from address is the same as this.getAddress()
+      const signature = this.signMessage(
+        keccak256(serialize(<UnsignedTransaction>tx))
+      );
+      return new Promise<string>((resolve, reject) => {
+        signature.then((value) =>
+          resolve(serialize(<UnsignedTransaction>tx, value))
+        );
+      });
+    });
   };
   connect = (provider: Provider): Signer => {
     throw new Error("Not implemented");
@@ -44,7 +56,7 @@ export class BlsSigner extends Signer {
     const pubkey = mcl.g2ToHex(normalized);
     return { pubkey, secret };
   };
-  
+
   private getSecret = (key: string): mcl.SecretKey => {
     const hexKey = hexlify(key);
     if (hexKey.length !== 66) {
