@@ -34,7 +34,6 @@ export class BlsSigner extends Signer {
   signTransaction = (transaction: TransactionRequest): Promise<string> => {
     return resolveProperties(transaction).then((tx) => {
       // TODO: check if tx's from address is the same as this.getAddress()
-
       const signature = this.signMessage(
         keccak256(serialize(<UnsignedTransaction>tx))
       );
