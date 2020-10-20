@@ -1,5 +1,13 @@
 import { BytesLike, Signer } from "ethers";
-import { hexlify, concat, Bytes, resolveProperties } from "ethers/lib/utils";
+import {
+  hexlify,
+  concat,
+  Bytes,
+  resolveProperties,
+  splitSignature,
+  hexZeroPad,
+  joinSignature,
+} from "ethers/lib/utils";
 import { Provider, TransactionRequest } from "@ethersproject/abstract-provider";
 import * as mcl from "hubble-contracts/dist/ts/mcl";
 import { serialize, UnsignedTransaction } from "@ethersproject/transactions";
@@ -25,25 +33,46 @@ export class BlsSigner extends Signer {
     const { secret } = this.getKeyPair(this.privateKey());
     const digest = hexlify(message);
     const { signature, M } = mcl.sign(digest, secret);
-    const payload = hexlify(concat(mcl.g1ToHex(signature)));
-    return new Promise((resolve) => resolve(payload));
+    const [x, y] = mcl.g1ToHex(signature);
+
+    const payload = joinSignature({
+      r: hexZeroPad(x, 32),
+      s: hexZeroPad(y, 32),
+      recoveryParam: 27,
+    });
+
+    return Promise.resolve(payload);
   };
   getAddress = (): Promise<string> => {
-    return new Promise((resolve, reject) => reject("Not implemented"));
+    const { pubkey } = this.getKeyPair(this.privateKey());
+    return Promise.resolve(this.addressFromPublicKey(pubkey));
   };
+
   signTransaction = (transaction: TransactionRequest): Promise<string> => {
     return resolveProperties(transaction).then((tx) => {
-      // TODO: check if tx's from address is the same as this.getAddress()
+      // https://github.com/ethers-io/ethers.js/blob/be4e2164e64dfa0697561763e8079120a485a566/packages/wallet/src.ts/index.ts#L110-L115
+      if (tx.from != null) {
+        const address = this.addressFromPublicKey(
+          this.getKeyPair(this.privateKey()).pubkey
+        );
+        if (tx.from !== address) {
+          console.error(
+            "transaction from address mismatch",
+            "transaction.from",
+            transaction.from
+          );
+        }
+        delete tx.from;
+      }
       const signature = this.signMessage(
         keccak256(serialize(<UnsignedTransaction>tx))
       );
-      return new Promise<string>((resolve, reject) => {
-        signature.then((value) =>
-          resolve(serialize(<UnsignedTransaction>tx, value))
-        );
-      });
+      return signature.then((value) =>
+        serialize(<UnsignedTransaction>tx, value)
+      );
     });
   };
+
   connect = (provider: Provider): Signer => {
     throw new Error("Not implemented");
   };
@@ -67,5 +96,19 @@ export class BlsSigner extends Signer {
     const fr = this.mclwasm.deserializeHexStrToFr(key.slice(2));
     // console.log(fr.serializeToHexStr())
     return fr;
+  };
+
+  private addressFromPublicKey = (pubkey: mcl.PublicKey): string => {
+    // TODO: does the public key need padding before being hashed?
+    const payload = keccak256(
+      concat([
+        hexZeroPad(pubkey[0], 32),
+        hexZeroPad(pubkey[1], 32),
+        hexZeroPad(pubkey[2], 32),
+        hexZeroPad(pubkey[3], 32),
+      ])
+    );
+    // return resolves to last 20 bytes of hashed public key
+    return "0x" + payload.slice(payload.length - 40);
   };
 }
