@@ -1,35 +1,16 @@
 import { BytesLike, Signer } from "ethers";
 import { hexlify, concat, Bytes } from "ethers/lib/utils";
 import { Provider, TransactionRequest } from "@ethersproject/abstract-provider";
-import * as mcl from "./hubble-project/mcl";
-const mclwasm = require("mcl-wasm");
-
-const getKeyPair = (key: BytesLike): mcl.keyPair => {
-  const secret: mcl.SecretKey = getSecret(key.toString());
-  const mclPubkey: mcl.PublicKey = mclwasm.mul(mcl.g2(), secret);
-  const normalized = mclwasm.normalize(mclPubkey);
-  const pubkey = mcl.g2ToHex(normalized);
-  return { pubkey, secret };
-};
-
-const getSecret = (key: string): mcl.SecretKey => {
-  const hexKey = hexlify(key);
-  if (hexKey.length !== 66) {
-    throw new Error(
-      "BLS private key should be 32 bytes. Did you include 0x at the start?"
-    );
-  }
-  const fr = mclwasm.deserializeHexStrToFr(key.slice(2));
-  // console.log(fr.serializeToHexStr())
-  return fr;
-};
+import * as mcl from "hubble-contracts/ts/mcl";
 
 export class BlsSigner extends Signer {
   readonly privateKey: () => string;
+  private mclwasm: any;
 
   private constructor(privateKey: BytesLike) {
     super();
     this.privateKey = () => hexlify(privateKey);
+    this.mclwasm = mcl.getMclInstance();
   }
 
   public static async getBlsSigner(privateKey: BytesLike, domain: BytesLike) {
@@ -39,7 +20,7 @@ export class BlsSigner extends Signer {
   }
 
   signMessage = (message: Bytes | string): Promise<string> => {
-    const { secret } = getKeyPair(this.privateKey());
+    const { secret } = this.getKeyPair(this.privateKey());
     const digest = hexlify(message);
     const { signature, M } = mcl.sign(digest, secret);
     const payload = hexlify(concat(mcl.g1ToHex(signature)));
@@ -53,5 +34,26 @@ export class BlsSigner extends Signer {
   };
   connect = (provider: Provider): Signer => {
     throw new Error("Not implemented");
+  };
+
+  private getKeyPair = (key: BytesLike): mcl.keyPair => {
+    const secret: mcl.SecretKey = this.getSecret(key.toString());
+    const mclPubkey: mcl.PublicKey = this.mclwasm.mul(mcl.g2(), secret);
+    // TODO: do we need to normalise?
+    const normalized = this.mclwasm.normalize(mclPubkey);
+    const pubkey = mcl.g2ToHex(normalized);
+    return { pubkey, secret };
+  };
+  
+  private getSecret = (key: string): mcl.SecretKey => {
+    const hexKey = hexlify(key);
+    if (hexKey.length !== 66) {
+      throw new Error(
+        "BLS private key should be 32 bytes. Did you include 0x at the start?"
+      );
+    }
+    const fr = this.mclwasm.deserializeHexStrToFr(key.slice(2));
+    // console.log(fr.serializeToHexStr())
+    return fr;
   };
 }

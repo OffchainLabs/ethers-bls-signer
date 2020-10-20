@@ -1,5 +1,5 @@
 import { BlsSigner } from "./index";
-import { randHex } from "./hubble-project/utils";
+import { randHex } from "hubble-contracts/ts/utils";
 import { expect } from "chai";
 import "mocha";
 import { concat, hexlify } from "ethers/lib/utils";
