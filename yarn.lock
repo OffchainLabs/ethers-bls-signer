@@ -1471,9 +1471,9 @@ hosted-git-info@^2.1.4:
   resolved "https://registry.yarnpkg.com/hosted-git-info/-/hosted-git-info-2.8.8.tgz#7539bd4bc1e0e0a895815a2e0262420b12858488"
   integrity sha512-f/wzC2QaWBs7t9IYqB4T3sR1xviIViXJRJTWBlx2Gf3g0Xi5vI7Yy4koXQ1c9OYDGHN9sBy1DQ2AB8fqZBWhUg==
 
-"hubble-contracts@https://github.com/fredlacs/hubble-contracts#refactor-package":
+"hubble-contracts@https://github.com/fredlacs/hubble-contracts#dist":
   version "0.1.0"
-  resolved "https://github.com/fredlacs/hubble-contracts#80ca16918eb8276299882b0aec7c75713ec780aa"
+  resolved "https://github.com/fredlacs/hubble-contracts#0cb5bd7da9e80a6d93aece0cae499f01004f50b7"
 
 imurmurhash@^0.1.4:
   version "0.1.4"

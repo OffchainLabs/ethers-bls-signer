@@ -1,7 +1,7 @@
 import { BytesLike, Signer } from "ethers";
 import { hexlify, concat, Bytes } from "ethers/lib/utils";
 import { Provider, TransactionRequest } from "@ethersproject/abstract-provider";
-import * as mcl from "hubble-contracts/ts/mcl";
+import * as mcl from "hubble-contracts/dist/ts/mcl";
 
 export class BlsSigner extends Signer {
   readonly privateKey: () => string;
