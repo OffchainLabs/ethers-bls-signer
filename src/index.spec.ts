@@ -1,8 +1,9 @@
 import { BlsSigner } from "./index";
-import { randHex } from "hubble-contracts/dist/ts/utils";
 import { expect } from "chai";
 import "mocha";
-import { concat, hexlify } from "ethers/lib/utils";
+import { concat, hexlify, randomBytes } from "ethers/lib/utils";
+
+const randHex = (n: number) => hexlify(randomBytes(n))
 
 describe("Ethers bls signer", () => {
   it("should instantiate signer class", async () => {

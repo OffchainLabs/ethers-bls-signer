@@ -4,12 +4,11 @@ import {
   concat,
   Bytes,
   resolveProperties,
-  splitSignature,
   hexZeroPad,
   joinSignature,
 } from "ethers/lib/utils";
 import { Provider, TransactionRequest } from "@ethersproject/abstract-provider";
-import * as mcl from "hubble-contracts/dist/ts/mcl";
+import * as mcl from "@thehubbleproject/bls/dist/mcl";
 import { serialize, UnsignedTransaction } from "@ethersproject/transactions";
 import { keccak256 } from "@ethersproject/keccak256";
 
@@ -56,11 +55,11 @@ export class BlsSigner extends Signer {
           this.getKeyPair(this.privateKey()).pubkey
         );
         if (tx.from !== address) {
-          console.error(
-            "transaction from address mismatch",
-            "transaction.from",
-            transaction.from
-          );
+          // console.error(
+          //   "transaction from address mismatch",
+          //   "transaction.from",
+          //   transaction.from
+          // );
         }
         delete tx.from;
       }
